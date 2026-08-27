@@ -1,4 +1,4 @@
-name: Test NikosTV Bot
+name: Diagnostic Xtream
 
 on:
   workflow_dispatch:
@@ -8,19 +8,62 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Recuperer le code
-        uses: actions/checkout@v4
-
-      - name: Installer Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Tester Xtream et Telegram
+      - name: Diagnostic connexion Xtream
         env:
           XTREAM_URL: ${{ secrets.XTREAM_URL }}
           XTREAM_USER: ${{ secrets.XTREAM_USER }}
           XTREAM_PASS: ${{ secrets.XTREAM_PASS }}
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python test_bot.py
+        run: |
+          echo "=============================="
+          echo "TEST 1 - HTTP normal"
+          echo "=============================="
+
+          CODE=$(curl -sS \
+            -o /dev/null \
+            -w "%{http_code}" \
+            -G \
+            --data-urlencode "username=$XTREAM_USER" \
+            --data-urlencode "password=$XTREAM_PASS" \
+            "$XTREAM_URL/player_api.php")
+
+          echo "Résultat : HTTP $CODE"
+
+
+          echo ""
+          echo "=============================="
+          echo "TEST 2 - IPv4 + HTTP/1.1"
+          echo "=============================="
+
+          CODE=$(curl -4 \
+            --http1.1 \
+            -sS \
+            -o /dev/null \
+            -w "%{http_code}" \
+            -H "Connection: close" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152.0 Safari/537.36" \
+            -G \
+            --data-urlencode "username=$XTREAM_USER" \
+            --data-urlencode "password=$XTREAM_PASS" \
+            "$XTREAM_URL/player_api.php")
+
+          echo "Résultat : HTTP $CODE"
+
+
+          echo ""
+          echo "=============================="
+          echo "TEST 3 - IPv4 + HTTP/1.0"
+          echo "=============================="
+
+          CODE=$(curl -4 \
+            --http1.0 \
+            -sS \
+            -o /dev/null \
+            -w "%{http_code}" \
+            -H "Connection: close" \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/152.0 Safari/537.36" \
+            -G \
+            --data-urlencode "username=$XTREAM_USER" \
+            --data-urlencode "password=$XTREAM_PASS" \
+            "$XTREAM_URL/player_api.php")
+
+          echo "Résultat : HTTP $CODE"
